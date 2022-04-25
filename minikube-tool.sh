@@ -16,6 +16,10 @@ WORKFILE="${MACHINE_NAME}-${DATE_STAMP}.tgz"
 ###
 # Functions
 ###
+get_latest_release() {
+	curl --silent "https://api.github.com/repos/kubernetes/kubernetes/releases/latest" | jq -r .tag_name
+}
+
 cleanmk_warn(){
 	TIMETOWIPE=5
 	printf "╒═══════════════════════════════════════════════════════════════════════════════╕\n"
@@ -30,7 +34,7 @@ cleanmk_warn(){
 	done
 }
 
-function check_env() {
+check_env() {
         [ -z ${DOCKER_HOST} ] && KUBE_ENV="LOCAL" || KUBE_ENV="MINIKUBE"
 }
 
@@ -102,7 +106,7 @@ restore_minikube(){
 version(){
 	printf "Minikube-Tool\n"
 	printf "Version 0.1.1\n"
-	printf "https://github.com/gergme/minikube-tool\n"
+	printf "https://github.com/smashkode/minikube-tool\n"
 }
 
 install_ver(){
@@ -128,6 +132,7 @@ run_program(){
 	[[ ${NO_WIPE} -ne 1 ]] && destroy || \
 	kubever_warn
 	#[[ -z ${KUBE_VERSION} ]] && KUBE_VERSION=`jq ".KubernetesConfig.KubernetesVersion" ${MACHINE_STORAGE_PATH/profiles/${MACHINE_NAME}/config.json`
+	KUBE_VERSION=`get_latest_release kubernetes/kubernetes`
 	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} --insecure-registry=localhost:5000 --disk-size 30g --cpus 2 --memory 4096
 	eval $(minikube docker-env)
 	docker run -d -p 5000:5000 --restart=always --name registry registry:2
@@ -182,6 +187,7 @@ while test $# -gt 0; do
 
 			-v|--version)
 					version
+					get_lastest_release "kubernetes/kubernetes"
 					RAN=1
 					;;
 
