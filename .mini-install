@@ -6,6 +6,6 @@ function finish {
     shred -u ${currentscript};
 }
 
-sudo mv -p `pwd`/minikube-tool.sh /usr/local/bin
+sudo mv `pwd`/minikube-tool.sh /usr/local/bin/mk-tool
 
 trap finish EXIT
