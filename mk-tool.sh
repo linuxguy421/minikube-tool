@@ -123,11 +123,6 @@ while test $# -gt 0; do
 					exit 0
 					;;
 
-			-b|--backup)
-					backup_docker 
-					RAN=1
-					shift
-					;;
 			-d|--default-kube)
 					USE_DEFAULT=1
 					kubever_warn
@@ -139,18 +134,12 @@ while test $# -gt 0; do
 					shift
 					;;
 
-			-r|--restore)
-					RESTORE_FILE=${2}
-					restore_docker
-					RAN=1
-					;;
-
 			-v|--version)
 					version
 					RAN=1
 					;;
 
-			-R|--run)
+			-e|--run)
 					install_ver
 					run_program
 					cleanup
