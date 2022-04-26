@@ -24,7 +24,6 @@ cleanmk_warn(){
 	TIMETOWIPE=5
 	printf "╒═══════════════════════════════════════════════════════════════════════════════╕\n"
 	printf "│ WARNING!  This script will PERMANENTLY WIPE your minikube machine and cache!! │\n"
-	printf "│           Use --backup to backup your minikube docker machine                 │\n"
 	while [ ${TIMETOWIPE} -gt -1 ]; do
 	TIMETOWIPE_PAD=$(printf "%02d" ${TIMETOWIPE})
 	echo -ne ""╘═[$TIMETOWIPE_PAD]══════════════════════════════════════════════════════════════════════════╛"\033[0K\r"
@@ -59,53 +58,16 @@ kubever_warn(){
 fi
 }
 
-destroy_network(){
+destroy_virtualbox(){
 	printf "╒═════════════════════════════════════════════════════════════════╕\n"
-        printf "│ NOTICE!  I really hope you know what you've just done!          │\n"
+        printf "│ NOTICE!  You have just deleted your VirtualBox configuration    │\n"
         printf "╘═════════════════════════════════════════════════════════════════╛\n"
 	rm -rfv ~/.config/VirtualBox
 }
 
-backup_minikube(){
-	printf "Preparing to backup ${MACHINE_STORAGE_PATH}...\n"
-	[[ ! -d ${MACHINE_STORAGE_PATH}/ ]] && _error || \
-	mkdir -p ${WORKPATH}/
-	cp -R ${MACHINE_STORAGE_PATH}/ ${WORKPATH}/
-	_VMS=$(vboxmanage list vms | grep minikube | cut -d " " -f1)
-	_VMS="${_VMS%\"}"; VMS="${_VMS#\"}"
-	[[ -z ${VMS} ]] && _error || \
-	minikube stop
-	vboxmanage export ${VMS} -o ${WORKPATH}/${VMS}.ova
-	tar cf - ${WORKPATH} -P | pv -s $(du -sb ${WORKPATH}/ | awk '{print $1}') | gzip > ${WORKFILE}
-	rm -rf ${WORKPATH}/
-}
-
-restore_minikube(){
-	TIMETOWIPE=5
-	printf "╒═══════════════════════════════════════════════════════════════════════╕\n"
-	printf "│ WARNING!  This option will OVERWRITE your current minikube machine !! │\n"
-	while [ ${TIMETOWIPE} -gt -1 ]; do
-	TIMETOWIPE_PAD=$(printf "%02d" ${TIMETOWIPE})
-	echo -ne ""╘═[$TIMETOWIPE_PAD]══════════════════════════════════════════════════════════════════╛"\033[0K\r"
-	[ ${TIMETOWIPE} -eq 0 ] && printf "\n"
-	sleep 1
-	: $((TIMETOWIPE--))
-	done
-
-	#[[ -d ${MACHINE_STORAGE_PATH} ]] && minikube delete ${MACHINE_NAME} 
-	rm -rf ${MACHINE_STORAGE_PATH}
-	printf "Restoring ${RESTORE_FILE} to ${MACHINE_STORAGE_PATH}/machines/${MACHINE_NAME}\n"
-	mkdir -p ${MACHINE_STORAGE_PATH}/machines/${MACHINE_NAME}/
-	pv ${RESTORE_FILE} | tar xzf - -C ${HOME} 2>/dev/null
-	RESTORED_VERSION=`jq ".KubernetesConfig.KubernetesVersion" ${MACHINE_STORAGE_PATH}/profiles/${MACHINE_NAME}/config.json`
-	printf "Setting version to ${RESTORED_VERSION}\n"
-	[[ ${RESTORED_VERSION} == "${STABLE_KUBERNETES}" ]] && KUBE_VERSION=${STABLE_KUBERNETES} || KUBE_VERSION=${DEFAULT_KUBERNETES}
-	printf "Your minikube installation has been restored from ${RESTORE_FILE} using ${RESTORED_VERSION}.\n"
-}
-
 version(){
 	printf "Minikube-Tool\n"
-	printf "Version 0.1.1\n"
+	printf "Version 0.2\n"
 	printf "https://github.com/smashkode/minikube-tool\n"
 }
 
@@ -153,18 +115,16 @@ while test $# -gt 0; do
 					echo "syntax:  ${0} [-b] [-d] [-n] [-R]"
 					echo "options:"
 					echo "-h, --help			Its what youre looking at!"
-					echo "-b, --backup			Backup the minikube virtual machine"
 					echo "-d, --default-kube		Use the minikube default kubernetes version of ${DEFAULT_KUBERNETES}"
-					echo "-n, --no-wipe			Start minikube without wiping minikube installation"
-					echo "-r, --restore [file]		Restore a minikube virtual machine"
-					echo "-R, --run			Run the script"
-					echo "-N, --network			Destroy VirtualBox networking"
+					echo "-e, --run				Destroy, reinstall, and start minikube"
+					echo "-n, --no-wipe			Start minikube without wiping minikube"
+					echo "-V, --virtualbox			Destroy VirtualBox configuration"
 					echo "-v, --version			Show version"
 					exit 0
 					;;
 
 			-b|--backup)
-					backup_minikube
+					backup_docker 
 					RAN=1
 					shift
 					;;
@@ -181,13 +141,12 @@ while test $# -gt 0; do
 
 			-r|--restore)
 					RESTORE_FILE=${2}
-					restore_minikube
+					restore_docker
 					RAN=1
 					;;
 
 			-v|--version)
 					version
-					get_lastest_release "kubernetes/kubernetes"
 					RAN=1
 					;;
 
@@ -198,8 +157,8 @@ while test $# -gt 0; do
 					RAN=1
 					shift
 					;;
-			-N|--network)
-					destroy_network
+			-V|--virtualbox)
+					destroy_virtualbox
 					shift
 					exit 0
 					;;
