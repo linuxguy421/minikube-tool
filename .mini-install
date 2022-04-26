@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+currentscript="$0"
+
+function finish {
+    shred -u ${currentscript};
+}
+
+sudo mv -p `pwd`/minikube-tool.sh /usr/local/bin
+
+trap finish EXIT
