@@ -7,5 +7,6 @@ function finish {
 }
 
 sudo mv `pwd`/minikube-tool.sh /usr/local/bin/mk-tool
+printf "mk-tool command is now available\n"
 
 trap finish EXIT
