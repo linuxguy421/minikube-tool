@@ -13,6 +13,11 @@ TMPPATH="/tmp"
 WORKPATH="${TMPPATH}/${MACHINE_NAME}-${DATE_STAMP}"
 WORKFILE="${MACHINE_NAME}-${DATE_STAMP}.tgz"
 
+command -v minikube >/dev/null 2>&1 || { echo >&2 "I require minikube but it's not installed.  Aborting."; exit 1; }
+command -v docker >/dev/null 2>&1 || { echo >&2 "I require docker but it's not installed.  Aborting."; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; exit 1; }
+
+
 ###
 # Functions
 ###
