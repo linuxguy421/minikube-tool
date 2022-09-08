@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
 # This script uses latest STABLE as it's default
-# Set USE_DEFAULT=0 to use LATEST STABLE
-# Set USE_DEFAULT=1 to use MINIKUBE DEFAULT
-USE_DEFAULT=0
-DEFAULT_KUBERNETES="v1.23.5"
-STABLE_KUBERNETES="v1.23.5"
+# Set USE_LATEST=0 to use LATEST STABLE
+# Set USE_LATEST=1 to use LATEST VERSION AVAILABLE
+USE_LATEST=0
 DATE_STAMP=`date +%Y%m%d-%H%M-%S`
 MACHINE_NAME="minikube"
 MACHINE_STORAGE_PATH="$HOME/.minikube"
@@ -23,6 +21,10 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed
 ###
 get_latest_release() {
 	curl --silent "https://api.github.com/repos/kubernetes/kubernetes/releases/latest" | jq -r .tag_name
+}
+
+get_latest_stable() {
+	minikube config defaults kubernetes-version | head -n1 | cut -d ' ' -f2
 }
 
 cleanmk_warn(){
@@ -49,7 +51,7 @@ _error(){
 }
 
 kubever_warn(){
-	if [ ${USE_DEFAULT} -eq 0 ]; then 
+	if [ ${USE_LATEST} -eq 0 ]; then 
 	printf "╒═════════════════════════════════════════════════════════════════╕\n"	
 	printf "│ WARNING!  Minikube will use kubernetes ${STABLE_KUBERNETES} which is not the │\n"
 	printf "│           default of ${DEFAULT_KUBERNETES}                                    │\n"
@@ -77,7 +79,7 @@ version(){
 }
 
 install_ver(){
-	[ ${USE_DEFAULT} -eq 0 ] && KUBE_VERSION=${STABLE_KUBERNETES} || KUBE_VERSION=${DEFAULT_KUBERNETES}
+	[ ${USE_LATEST} -eq 0 ] && KUBE_VERSION=${STABLE_KUBERNETES} || KUBE_VERSION=${DEFAULT_KUBERNETES}
 }
 
 cleanup(){
@@ -99,7 +101,11 @@ run_program(){
 	[[ ${NO_WIPE} -ne 1 ]] && destroy || \
 	kubever_warn
 	#[[ -z ${KUBE_VERSION} ]] && KUBE_VERSION=`jq ".KubernetesConfig.KubernetesVersion" ${MACHINE_STORAGE_PATH/profiles/${MACHINE_NAME}/config.json`
-	KUBE_VERSION=`get_latest_release kubernetes/kubernetes`
+	if [ $USE_LATEST == "1" ]; then
+		KUBE_VERSION=`get_latest_release kubernetes/kubernetes`
+	else
+		KUBE_VERSION=`get_latest_stable`
+	fi
 	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} --insecure-registry=localhost:5000 --disk-size 30g --cpus 2 --memory 4096
 	eval $(minikube docker-env)
 	docker run -d -p 5000:5000 --restart=always --name registry registry:2
@@ -129,7 +135,7 @@ while test $# -gt 0; do
 					;;
 
 			-d|--default-kube)
-					USE_DEFAULT=1
+					USE_LATEST=1
 					kubever_warn
 					shift
 					;;
