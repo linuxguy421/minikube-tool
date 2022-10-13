@@ -10,21 +10,30 @@ MACHINE_STORAGE_PATH="$HOME/.minikube"
 TMPPATH="/tmp"
 WORKPATH="${TMPPATH}/${MACHINE_NAME}-${DATE_STAMP}"
 WORKFILE="${MACHINE_NAME}-${DATE_STAMP}.tgz"
+VM_DRIVER="--driver=kvm"
+#VM_NET="--apiserver-ips=10.10.10.78"
 
 command -v minikube >/dev/null 2>&1 || { echo >&2 "I require minikube but it's not installed.  Aborting."; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo >&2 "I require docker but it's not installed.  Aborting."; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; exit 1; }
 
-
 ###
 # Functions
 ###
+
 get_latest_release() {
 	curl --silent "https://api.github.com/repos/kubernetes/kubernetes/releases/latest" | jq -r .tag_name
 }
 
 get_latest_stable() {
 	minikube config defaults kubernetes-version | head -n1 | cut -d ' ' -f2
+}
+
+check_systemd() {
+	if [[ $(ps --no-headers -o comm 1) == "systemd" ]]; then
+		printf "Detected systemd...\n"
+		USE_SYSTEMD="--extra-config=kubelet.cgroup-driver=systemd"
+	fi 
 }
 
 cleanmk_warn(){
@@ -106,7 +115,8 @@ run_program(){
 	else
 		KUBE_VERSION=`get_latest_stable`
 	fi
-	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} --insecure-registry=localhost:5000 --disk-size 30g --cpus 2 --memory 4096
+	check_systemd
+	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} ${VM_NET} ${USE_SYSTEMD} ${VM_DRIVER} --insecure-registry=localhost:5000 --disk-size 30g --cpus 2 --memory 4096
 	eval $(minikube docker-env)
 	docker run -d -p 5000:5000 --restart=always --name registry registry:2
 	printf "NOTICE!  Your docker environment is currently set to ${KUBE_ENV}!\n"
