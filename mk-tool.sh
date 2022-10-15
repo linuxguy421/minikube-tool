@@ -136,7 +136,7 @@ while test $# -gt 0; do
 					echo "syntax:  ${0} [-b] [-d] [-n] [-R]"
 					echo "options:"
 					echo "-h, --help			Its what youre looking at!"
-					echo "-d, --default-kube		Use the minikube default kubernetes version of ${DEFAULT_KUBERNETES}"
+					echo "-d, --default-kube		Use the minikube default kubernetes version"
 					echo "-e, --run				Destroy, reinstall, and start minikube"
 					echo "-n, --no-wipe			Start minikube without wiping minikube"
 					echo "-V, --virtualbox			Destroy VirtualBox configuration"
