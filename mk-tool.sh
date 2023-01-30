@@ -46,7 +46,7 @@ cleanmk_warn(){
 	TIMETOWIPE=5
 	printf "╒═══════════════════════════════════════════════════════════════════════════════╕\n"
 	printf "│ WARNING!  This script will PERMANENTLY WIPE your minikube machine and cache!! │\n"
-	printf "│ Container configuration:  ${MK_DISKSIZE} ${MK_RAM}MB                          │\n"
+	printf "│ Container configuration:  [DISK] ${MK_DISKSIZE} [RAM] ${MK_RAM}MB                             │\n"
 	while [ ${TIMETOWIPE} -gt -1 ]; do
 	TIMETOWIPE_PAD=$(printf "%02d" ${TIMETOWIPE})
 	echo -ne ""╘═[$TIMETOWIPE_PAD]══════════════════════════════════════════════════════════════════════════╛"\033[0K\r"
