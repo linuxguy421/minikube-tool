@@ -13,6 +13,12 @@ WORKFILE="${MACHINE_NAME}-${DATE_STAMP}.tgz"
 VM_DRIVER="--driver=kvm"
 #VM_NET="--apiserver-ips=10.10.10.78"
 
+###
+# Container configuration
+###
+MK_DISKSIZE="16G"
+MK_RAM="4096"
+
 command -v minikube >/dev/null 2>&1 || { echo >&2 "I require minikube but it's not installed.  Aborting."; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo >&2 "I require docker but it's not installed.  Aborting."; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; exit 1; }
@@ -116,7 +122,7 @@ run_program(){
 		KUBE_VERSION=`get_latest_stable`
 	fi
 	check_systemd
-	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} ${VM_NET} ${USE_SYSTEMD} ${VM_DRIVER} --insecure-registry=localhost:5000 --disk-size 30g --cpus 2 --memory 4096
+	[[ -f ${MACHINE_STORAGE_PATH}/mkt.run ]] && $(${MACHINE_STORAGE_PATH}/mkt.run) || minikube start --kubernetes-version ${KUBE_VERSION} ${VM_NET} ${USE_SYSTEMD} ${VM_DRIVER} --insecure-registry=localhost:5000 --disk-size ${MK_DISKSIZE} --cpus 2 --memory ${MK_RAM}
 	eval $(minikube docker-env)
 	docker run -d -p 5000:5000 --restart=always --name registry registry:2
 	printf "NOTICE!  Your docker environment is currently set to ${KUBE_ENV}!\n"
